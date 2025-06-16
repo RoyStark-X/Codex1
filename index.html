@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Image Recognition</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.6.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.0"></script>
+</head>
+<body>
+  <h1>Image Recognition Demo</h1>
+  <input type="file" id="file-input" accept="image/*" />
+  <div id="result"></div>
+  <script>
+    const fileInput = document.getElementById('file-input');
+    const resultDiv = document.getElementById('result');
+    let model;
+
+    async function loadModel() {
+      model = await mobilenet.load();
+    }
+
+    fileInput.addEventListener('change', async () => {
+      if (!model) await loadModel();
+      const file = fileInput.files[0];
+      if (!file) return;
+      const img = document.createElement('img');
+      img.src = URL.createObjectURL(file);
+      img.onload = async () => {
+        const predictions = await model.classify(img);
+        resultDiv.innerHTML = predictions.map(p =>
+          `<p>${p.className} - ${(p.probability * 100).toFixed(2)}%</p>`
+        ).join('');
+        URL.revokeObjectURL(img.src);
+      };
+    });
+  </script>
+</body>
+</html>
