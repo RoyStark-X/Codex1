@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Image Recognition</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.6.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.0"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      text-align: center;
+      background-color: #f4f4f4;
+    }
+    #container {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      display: inline-block;
+    }
+    #preview {
+      margin-top: 20px;
+      max-width: 300px;
+      display: none;
+    }
+    table {
+      margin: 20px auto;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 8px 12px;
+      border-bottom: 1px solid #ddd;
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <h1>Image Recognition Demo</h1>
+    <input type="file" id="file-input" accept="image/*" />
+    <p id="status"></p>
+    <img id="preview" alt="Preview" />
+    <div id="predictions"></div>
+  </div>
+  <script>
+    const fileInput = document.getElementById('file-input');
+    const preview = document.getElementById('preview');
+    const predictionsDiv = document.getElementById('predictions');
+    const status = document.getElementById('status');
+    let model;
+
+    async function loadModel() {
+      status.textContent = 'Loading model...';
+      model = await mobilenet.load();
+      status.textContent = '';
+    }
+
+    fileInput.addEventListener('change', async () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+      if (!model) await loadModel();
+
+      status.textContent = 'Classifying...';
+      fileInput.disabled = true;
+
+      preview.src = URL.createObjectURL(file);
+      preview.style.display = 'block';
+
+      preview.onload = async () => {
+        const preds = await model.classify(preview);
+        status.textContent = '';
+        predictionsDiv.innerHTML =
+          '<table><thead><tr><th>Class</th><th>Confidence</th></tr></thead><tbody>' +
+          preds.map(p => `<tr><td>${p.className}</td><td>${(p.probability*100).toFixed(2)}%</td></tr>`).join('') +
+          '</tbody></table>';
+        fileInput.disabled = false;
+        URL.revokeObjectURL(preview.src);
+      };
+    });
+  </script>
+</body>
+</html>
+
